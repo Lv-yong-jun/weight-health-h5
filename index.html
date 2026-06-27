@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>体重健康测评 - 吕勇军【平安金融科技集团】</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#e8f4f8 0%,#d4e8f0 100%);min-height:100vh;padding:16px}
+.container{max-width:420px;margin:0 auto}
+.header{text-align:center;margin-bottom:20px;padding:20px 16px;background:linear-gradient(135deg,#4a90d9,#5ba0e0);border-radius:16px;color:#fff;box-shadow:0 4px 20px rgba(74,144,217,0.3)}
+.header h1{font-size:22px;margin-bottom:6px;font-weight:600}
+.header p{font-size:13px;opacity:0.9}
+.card{background:#fff;border-radius:14px;padding:20px 16px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.card-title{font-size:16px;font-weight:600;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.q-number{display:inline-block;width:24px;height:24px;background:#4a90d9;color:#fff;border-radius:50%;text-align:center;line-height:24px;font-size:13px;margin-right:8px;flex-shrink:0}
+label.option{display:flex;align-items:flex-start;padding:12px 14px;margin-bottom:8px;background:#f8fafc;border-radius:10px;cursor:pointer;transition:all 0.2s;border:2px solid transparent;font-size:14px;color:#444;line-height:1.5}
+label.option:hover{background:#e8f4f8;border-color:#4a90d9}
+label.option input{margin-right:10px;margin-top:2px;flex-shrink:0;accent-color:#4a90d9}
+input[type="number"]{width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;margin-top:8px;outline:none}
+input[type="number"]:focus{border-color:#4a90d9}
+.unit{font-size:13px;color:#888;margin-left:4px}
+.btn-primary{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#4a90d9,#5ba0e0);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:12px;transition:all 0.2s;box-shadow:0 4px 14px rgba(74,144,217,0.3);text-decoration:none;text-align:center;line-height:1.5}
+.btn:active{transform:scale(0.98)}
+.progress-bar{height:4px;background:#e0e0e0;border-radius:2px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a90d9,#5ba0e0);border-radius:2px;transition:width 0.3s}
+.result-box{background:linear-gradient(135deg,#e8f8f0,#d4f0e8);border-radius:12px;padding:18px;margin:14px 0;text-align:center}
+.result-title{font-size:20px;font-weight:700;color:#2d7d5a;margin-bottom:8px}
+.result-score{font-size:36px;font-weight:800;color:#4a90d9;margin:10px 0}
+.result-stars{font-size:22px;margin:8px 0}
+.section{margin:14px 0;padding:14px;background:#f8fafc;border-radius:10px;text-align:left}
+.section h4{font-size:15px;color:#333;margin-bottom:8px;font-weight:600}
+.section p,.section li{font-size:13.5px;color:#555;line-height:1.7}
+.section ul{padding-left:18px}
+.highlight{color:#4a90d9;font-weight:600}
+.tip-box{background:#fff8e8;border-left:4px solid #f0c040;padding:12px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:13px;color:#666;line-height:1.7}
+.qr-section{text-align:center;margin:20px 0;padding:16px;background:#f8fafc;border-radius:12px}
+.qr-section img{width:160px;height:auto;border-radius:8px;margin:10px auto;display:block}
+.qr-section p{font-size:13px;color:#666;margin-top:8px}
+.footer{text-align:center;font-size:12px;color:#aaa;margin-top:20px;padding-bottom:20px}
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <div class="header">
+    <h1>⚖️ 体重健康测评</h1>
+    <p>科学评估您的体重与健康状况，获取个性化改善方案</p>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:8%"></div></div>
+  <div id="question-area"></div>
+  <a class="btn-primary" id="next-btn" href="javascript:void(0)">开始测评</a>
+</div>
+
+<script>
+window.currentQ = 0;
+window.answers = [];
+
+var questions = [
+  {q:"您的身高是？", type:"input", unit:"cm", placeholder:"例如：170"},
+  {q:"您的体重是？", type:"input", unit:"kg", placeholder:"例如：70"},
+  {q:"您的腰围大约是？（可估算）", type:"input", unit:"cm", placeholder:"例如：85"},
+  {q:"您的饮食习惯更接近哪种？", type:"single",
+   options:["三餐规律，荤素搭配均衡","基本规律，偶尔外卖或暴饮暴食","饮食不规律，经常漏餐或夜宵","高糖高油饮食为主，蔬菜摄入少"]},
+  {q:"您每周运动（中等强度以上）的频率是？", type:"single",
+   options:["每周4次以上，每次30分钟以上","每周2-3次，每次20-30分钟","每周1次或偶尔运动","几乎不运动，久坐为主"]},
+  {q:"您的工作性质主要是？", type:"single",
+   options:["体力劳动或经常走动","轻度活动，偶尔走动","久坐办公，每天6小时以上","自由职业，活动量不规律"]},
+  {q:"您是否有控制体重的尝试？", type:"single",
+   options:["有，成功保持健康体重","有尝试，但容易反弹","想尝试，但不知道方法","没有，顺其自然"]},
+  {q:"您认为体重管理的最大障碍是？（可多选）", type:"multi",
+   options:["没时间运动","管不住嘴，爱吃零食","代谢慢，怎么减都难","缺乏专业指导","工作压力大，没精力"]},
+  {q:"您的睡眠质量如何？", type:"single",
+   options:["很好，每天7-8小时，醒来精神好","一般，偶尔失眠或浅眠","较差，经常熬夜或睡眠不足","很差，长期睡眠问题"]},
+  {q:"您希望达到的体重管理目标是？", type:"single",
+   options:["减重5-10斤，塑形为主","减重10-20斤，明显改善","减重20斤以上，彻底改变","维持当前体重，保持健康即可"]}
+];
+
+function renderQuestion() {
+  var q = questions[window.currentQ];
+  var html = '<div class="card"><div class="card-title"><span class="q-number">'+(window.currentQ+1)+'</span>'+q.q+'</div>';
+  if(q.type === "input") {
+    html += '<input type="number" id="input-val" placeholder="'+q.placeholder+'" value="'+(window.answers[window.currentQ]||"")+'"><span class="unit">'+q.unit+'</span>';
+  } else if(q.type === "single") {
+    q.options.forEach(function(opt, i) {
+      html += '<label class="option"><input type="radio" name="q'+window.currentQ+'" value="'+i+'" '+(window.answers[window.currentQ]==i?"checked":"")+' onchange="window.selectSingle('+window.currentQ+','+i+')"> '+opt+'</label>';
+    });
+  } else if(q.type === "multi") {
+    var selected = window.answers[window.currentQ] || [];
+    q.options.forEach(function(opt, i) {
+      html += '<label class="option"><input type="checkbox" value="'+i+'" '+(selected.indexOf(i)>=0?"checked":"")+' onchange="window.selectMulti('+window.currentQ+','+i+',this.checked)"> '+opt+'</label>';
+    });
+  }
+  html += '</div>';
+  document.getElementById("question-area").innerHTML = html;
+  var btn = document.getElementById("next-btn");
+  btn.textContent = window.currentQ >= questions.length-1 ? "查看测评结果" : "下一题";
+  document.getElementById("progress").style.width = ((window.currentQ+1)/questions.length*100)+"%";
+}
+
+window.selectSingle = function(qIdx, val) {
+  window.answers[qIdx] = val;
+  setTimeout(function(){renderQuestion();}, 50);
+};
+
+window.selectMulti = function(qIdx, val, checked) {
+  if(!window.answers[qIdx]) window.answers[qIdx] = [];
+  var arr = window.answers[qIdx];
+  if(checked) { if(arr.indexOf(val)<0) arr.push(val); }
+  else { window.answers[qIdx] = arr.filter(function(v){return v!==val;}); }
+};
+
+window.nextQuestion = function() {
+  var q = questions[window.currentQ];
+  if(q.type === "input") {
+    var val = document.getElementById("input-val").value;
+    if(!val) {alert("请填写后再继续");return;}
+    window.answers[window.currentQ] = parseFloat(val);
+  } else if(q.type === "single") {
+    if(window.answers[window.currentQ]===undefined) {alert("请选择后再继续");return;}
+  } else if(q.type === "multi") {
+    if(!window.answers[window.currentQ]||window.answers[window.currentQ].length===0) {alert("请至少选择一项");return;}
+  }
+  if(window.currentQ >= questions.length-1) {window.showResult();return;}
+  window.currentQ++;
+  renderQuestion();
+};
+
+window.showResult = function() {
+  var h = window.answers[0], w = window.answers[1], waist = window.answers[2];
+  var bmi = h&&w ? (w/Math.pow(h/100,2)).toFixed(1) : null;
+  var bmiLevel = h&&w ? (function(){var b=h&&w?(w/Math.pow(h/100,2)):0;if(b<18.5)return 1;if(b<24)return 3;if(b<28)return 2;return 1;}()) : 2;
+  var dietIdx = window.answers[3];
+  var exIdx = window.answers[4];
+  var sleepIdx = window.answers[8];
+
+  var stars = bmiLevel>=3 ? "⭐⭐⭐⭐⭐" : bmiLevel>=2 ? "⭐⭐⭐" : "⭐⭐";
+  var level = bmiLevel>=3 ? "体重健康良好" : bmiLevel>=2 ? "体重需要关注" : "体重管理优先级较高";
+  var levelColor = bmiLevel>=3 ? "#2d7d5a" : bmiLevel>=2 ? "#e6a000" : "#d94a4a";
+
+  var praise = "";
+  if(dietIdx===0) praise += "✅ 您的饮食习惯非常规律，这是保持健康体重的重要基础！";
+  if(exIdx<=1) praise += " ✅ 您有良好的运动习惯，这对代谢和健康非常有益！";
+  if(sleepIdx<=1) praise += " ✅ 您的睡眠质量良好，充足的睡眠是体重管理的秘密武器！";
+  if(!praise) praise = "✅ 您愿意花时间关注自己的健康状况，这份健康意识非常值得肯定！";
+
+  var suggestions = "";
+  if(bmi && bmi>=24) suggestions += '\u2022 \u60a8\u7684BMI\u4e3a <span style="color:#4a90d9;font-weight:600">'+bmi+'</span>\uff0c\u7a0d\u5fae\u8d85\u51fa\u5065\u5eb7\u8303\u56f4\uff0c\u901a\u8fc7\u79d1\u5b66\u7ba1\u7406\u53ef\u4ee5\u5f88\u597d\u5730\u6539\u5584\u3002';
+  if(waist && waist>=85) suggestions += "<br>• 腰围 "+waist+"cm，腹部脂肪略多，这会稍微增加代谢压力，不过好消息是腹部脂肪是最容易通过科学方法减掉的！";
+  if(dietIdx>=2) suggestions += "<br>• 饮食节奏稍微有些不规律，调整饮食结构就能看到明显变化。";
+  if(exIdx>=2) suggestions += "<br>• 运动频率偏低，每周增加2-3次中等强度运动会有很好的效果。";
+  if(sleepIdx>=2) suggestions += "<br>• 睡眠质量有待提升，睡眠不足会影响瘦素分泌，让体重管理变得更困难。";
+  if(!suggestions) suggestions = "• 您的各项指标都不错！继续保持，定期关注体重变化即可。";
+
+  var solution = "";
+  if(bmiLevel>=3) {
+    solution = '\u60a8\u76ee\u524d\u4f53\u91cd\u5065\u5eb7\uff0c\u5efa\u8bae\uff1a<br>\u2022 \u4fdd\u6301\u73b0\u6709\u996e\u98df\u548c\u8fd0\u52a8\u4e60\u60ef<br>\u2022 \u5b9a\u671f\u76d1\u6d4b\u4f53\u91cd\u53d8\u5316\uff08\u5efa\u8bae\u6bcf\u54681\u6b21\uff09<br>\u2022 \u53ef\u8003\u8651\u4f53\u9a8c\u6211\u4eec\u768445\u5929\u4f53\u91cd\u7ba1\u7406\u65b9\u6848\uff0c\u8fdb\u4e00\u6b65\u4f18\u5316\u8eab\u4f53\u6210\u5206';
+  } else {
+    solution = '\u9488\u5bf9\u60a8\u7684\u60c5\u51b5\uff0c\u6211\u5efa\u8bae\u91c7\u53d6<span style="color:#4a90d9;font-weight:600">\u79d1\u5b66\u3001\u6e29\u548c\u3001\u53ef\u6301\u7eed</span>\u7684\u4f53\u91cd\u7ba1\u7406\u65b9\u6848\uff1a<br><br><strong>\u2605 \u63a8\u8350\u65b9\u6848\uff1a45\u5929\u79d1\u5b66\u4f53\u91cd\u7ba1\u7406\u8ba1\u5212</strong><br>\u2022 \u4e0d\u8282\u98df\u3001\u4e0d\u5267\u70c8\u8fd0\u52a8\uff0c\u6e29\u548c\u53ef\u6301\u7eed<br>\u2022 \u8c03\u6574\u8eab\u4f53\u4ee3\u8c22\uff0c\u5efa\u7acb\u5065\u5eb7\u751f\u6d3b\u4e60\u60ef<br>\u2022 \u4e13\u4e1a\u987e\u95ee1\u5bf91\u8ddf\u8fdb\uff0c\u786e\u4fdd\u6548\u679c<br>\u2022 \u5e73\u5747\u51cf\u91cd8-15\u65a4\uff0c\u8170\u56f4\u660e\u663e\u7f29\u5c0f<br><br>\u4e0d\u5c11\u670b\u53cb\u53c2\u52a0\u540e\u53cd\u9988\uff1a\u4e0d\u4ec5\u4f53\u91cd\u964d\u4e86\uff0c\u7761\u7720\u3001\u7cbe\u529b\u4e5f\u660e\u663e\u6539\u5584\uff01';
+  }
+
+  var html = '<div class="result-box">'+
+    '<div class="result-title">🎉 测评完成！</div>'+
+    '<div class="result-stars">'+stars+'</div>'+
+    '<div class="result-score" style="color:'+levelColor+'">'+level+'</div>'+
+    (bmi?'<p style="color:#666;font-size:14px">您的BMI：'+bmi+'</p>':'')+
+    '</div>';
+
+  html += '<div class="section"><h4>🌟 您的健康亮点</h4><p>'+praise+'</p></div>';
+  html += '<div class="section"><h4>💡 优化建议</h4><p>'+suggestions+'</p></div>';
+  html += '<div class="section" style="background:#e8f8f0;border-left:4px solid #2d7d5a;"><h4>🎯 个性化解决方案</h4><p>'+solution+'</p></div>';
+
+  html += '<div class="tip-box">💡 <strong>温馨提示：</strong>体重管理不是挨饿，而是建立科学的生活方式。很多人尝试过节食减肥，结果反弹更严重——这是因为没有调整代谢。我们的方案从代谢入手，效果更持久。</div>';
+
+  html += '<div class="qr-section">'+
+    '<p style="font-weight:600;color:#333;font-size:15px">📱 扫码添加微信</p>'+
+    '<p style="color:#888;font-size:13px;margin:6px 0">获取个性化体重管理方案</p>'+
+    '<img src="qrcode-wechat.jpg" alt="微信二维码" onerror="this.style.display=\'none\'">'+
+    '<p style="font-size:13px;color:#4a90d9;font-weight:500">吕勇军【平安金融科技集团】</p>'+
+    '<p style="font-size:12px;color:#aaa;margin-top:4px">健康顾问 · 体重管理专家</p>'+
+    '</div>';
+
+  html += '<div class="footer">吕勇军【平安金融科技集团】 · 健康顾问<br>专注体重管理与健康规划</div>';
+
+  document.getElementById("question-area").innerHTML = html;
+  document.getElementById("next-btn").style.display = "none";
+  document.getElementById("progress").style.width = "100%";
+};
+
+document.getElementById('next-btn').addEventListener('click', function() {
+  window.nextQuestion();
+});
+
+renderQuestion();
+</script>
+</body>
+</html>
